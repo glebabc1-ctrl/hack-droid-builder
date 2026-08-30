@@ -1,0 +1,55 @@
+name: Build HACK DROID BUILDER APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Android build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git zip unzip openjdk-17-jdk autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
+            cmake libffi-dev libssl-dev
+
+      - name: Install Buildozer and Python build tools
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install buildozer "Cython==0.29.33"
+
+      - name: Prepare Buildozer project
+        run: |
+          cp resources/main.py main.py
+          cp resources/buildozer.spec buildozer.spec
+
+      - name: Build debug APK
+        run: buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: hack-droid-builder-apk
+          path: bin/*.apk
+          if-no-files-found: error
+          retention-days: 30
