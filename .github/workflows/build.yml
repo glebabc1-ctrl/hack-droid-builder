@@ -18,20 +18,37 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Buildozer and dependencies
+      - name: Install system dependencies
         run: |
-          pip install buildozer
           sudo apt update
           sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev
 
+      - name: Install Buildozer
+        run: |
+          pip install --upgrade buildozer
+
+      - name: Install Android SDK (cmdline-tools)
+        run: |
+          mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
+          cd ~/.buildozer/android/platform/android-sdk
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          unzip -q cmdline-tools.zip -d cmdline-tools
+          mv cmdline-tools/cmdline-tools cmdline-tools/latest
+          rm cmdline-tools.zip
+          # Проверяем, что sdkmanager существует
+          ls -la cmdline-tools/latest/bin/
+
       - name: Accept Android SDK licenses
         run: |
-          mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-          yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+          yes | sdkmanager --licenses || true
 
       - name: Build APK
         run: |
-          buildozer android debug --accept-license
+          export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+          buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
