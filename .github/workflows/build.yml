@@ -35,7 +35,7 @@ jobs:
           unzip -q cmdline-tools.zip -d cmdline-tools
           mv cmdline-tools/cmdline-tools cmdline-tools/latest
           rm cmdline-tools.zip
-          # Проверяем, что sdkmanager существует
+          # Проверяем, что sdkmanager есть
           ls -la cmdline-tools/latest/bin/
 
       - name: Accept Android SDK licenses
@@ -43,6 +43,11 @@ jobs:
           export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
           yes | sdkmanager --licenses || true
+
+      - name: Configure buildozer.spec paths
+        run: |
+          echo "android.sdk_path = $HOME/.buildozer/android/platform/android-sdk" >> buildozer.spec
+          echo "android.ndk_path = $HOME/.buildozer/android/platform/android-ndk-r25b" >> buildozer.spec
 
       - name: Build APK
         run: |
